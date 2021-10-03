@@ -13,7 +13,7 @@ public class WhatsApp extends AppCompatActivity {
     RecyclerView recyclerView;
     WhatsAppAdapter adapter;
     RecyclerView.LayoutManager layoutManager;
-    ArrayList<String> name, phone, attendance;
+    ArrayList<String> name, phone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,9 +28,9 @@ public class WhatsApp extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        name = new ArrayList<>(); phone = new ArrayList<>(); attendance = new ArrayList<>();
+        name = new ArrayList<>(); phone = new ArrayList<>();
         getStudentList();
-        adapter= new WhatsAppAdapter(this, name, phone, attendance);
+        adapter= new WhatsAppAdapter(this, name, phone);
         recyclerView.setAdapter(adapter);
     }
 
@@ -41,7 +41,7 @@ public class WhatsApp extends AppCompatActivity {
         for(int i=0; i<id; i++) {
             name.add(preferences.getString("Name"+ i, "Sample Name"));
             phone.add(preferences.getString("Phone"+ i, "Sample Name"));
-            attendance.add(preferences.getString("Attendance"+ i, "Sample Name"));
+            //attendance.add(preferences.getString("Attendance"+ i, "Sample Name"));
         }
     }
 

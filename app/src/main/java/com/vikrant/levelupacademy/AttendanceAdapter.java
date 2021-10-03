@@ -14,6 +14,7 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.My
 
     ArrayList<String> name, attendance;
     Context context;
+    int dayNo;
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
 
@@ -56,7 +57,7 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.My
     public void updateAttendance(String item, int position) {
         SharedPreferences preferences = context.getSharedPreferences("student", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("Attendance"+ position, item);
+        editor.putString(""+dayNo+"Attendance"+ position, item);
         editor.apply();
         attendance.set(position, item);
         notifyDataSetChanged();
