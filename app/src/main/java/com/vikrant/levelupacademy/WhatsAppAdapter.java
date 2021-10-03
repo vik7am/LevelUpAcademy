@@ -78,6 +78,8 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
             packageName = "com.whatsapp";
         else if (appInstalledOrNot("com.whatsapp.w4b"))
             packageName = "com.whatsapp.w4b";
+        else if (appInstalledOrNot("com.gbwhatsapp"))
+            packageName = "com.gbwhatsapp";
         else {
             Toast.makeText(context, "WhatsApp is not Installed", Toast.LENGTH_SHORT).show();
             return;
@@ -88,7 +90,7 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
             PackageInfo info=packageManager.getPackageInfo(packageName, PackageManager.GET_META_DATA);
             url = "https://api.whatsapp.com/send?phone="+ countryCode + phone.get(position) +"&text=" +
                     URLEncoder.encode(message, "UTF-8");
-            intent.setPackage("com.whatsapp");
+            intent.setPackage(packageName);
             intent.setData(Uri.parse(url));
             context.startActivity(intent);
         } catch (NameNotFoundException e) {
