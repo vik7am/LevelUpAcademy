@@ -21,6 +21,7 @@ public class Student extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_student);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         initialize();
     }
 
@@ -63,5 +64,10 @@ public class Student extends AppCompatActivity {
             name.add(preferences.getString("Name"+ i, "Sample Name"));
             phone.add(preferences.getString("Phone"+ i, "Sample Number"));
         }
+    }
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }

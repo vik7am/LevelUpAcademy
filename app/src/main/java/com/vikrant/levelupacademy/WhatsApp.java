@@ -19,6 +19,7 @@ public class WhatsApp extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_whats_app);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         initialize();
     }
 
@@ -42,5 +43,11 @@ public class WhatsApp extends AppCompatActivity {
             phone.add(preferences.getString("Phone"+ i, "Sample Name"));
             attendance.add(preferences.getString("Attendance"+ i, "Sample Name"));
         }
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }

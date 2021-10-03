@@ -2,11 +2,15 @@ package com.vikrant.levelupacademy;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -17,6 +21,7 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
     ArrayList<String> name, phone, attendance;
     String countryCode = "91";
     Context context;
+    PackageManager packageManager;
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
 
@@ -35,6 +40,7 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
         this.name = name;
         this.phone = phone;
         this.attendance = attendance;
+        packageManager = context.getPackageManager();
     }
 
     @Override
@@ -54,16 +60,20 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
     public void sendMessage(int position) {
         String message = name.get(position) + " was " + attendance.get(position) + " today.";
         Intent intent = new Intent();
-        String url = null;
+        String url;
         try {
+            PackageInfo info=packageManager.getPackageInfo("com.whatsapp", PackageManager.GET_META_DATA);
             url = "https://api.whatsapp.com/send?phone="+ countryCode + phone.get(position) +"&text=" +
                     URLEncoder.encode(message, "UTF-8");
+            intent.setPackage("com.whatsapp");
+            intent.setData(Uri.parse(url));
+            context.startActivity(intent);
+        } catch (NameNotFoundException e) {
+            Toast.makeText(context, "WhatsApp is not Installed", Toast.LENGTH_SHORT).show();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        intent.setPackage("com.whatsapp");
-        intent.setData(Uri.parse(url));
-        context.startActivity(intent);
+
     }
 
     @Override

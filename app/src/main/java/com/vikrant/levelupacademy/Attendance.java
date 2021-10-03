@@ -21,6 +21,7 @@ public class Attendance extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_attendance);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         initialize();
     }
 
@@ -54,5 +55,11 @@ public class Attendance extends AppCompatActivity {
             name.add(preferences.getString("Name"+ i, "Sample Name"));
             attendance.add(preferences.getString("Attendance"+ i, ""));
         }
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }

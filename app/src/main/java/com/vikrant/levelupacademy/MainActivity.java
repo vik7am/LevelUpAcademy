@@ -1,6 +1,8 @@
 package com.vikrant.levelupacademy;
 
 import android.content.Intent;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,5 +24,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void whatsapp(View view) { startActivity(new Intent(this, WhatsApp.class)); }
+
+
 
 }

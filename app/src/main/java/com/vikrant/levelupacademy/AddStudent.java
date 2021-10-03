@@ -16,6 +16,7 @@ public class AddStudent extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_student);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         name = findViewById(R.id.editTextTextPersonName);
         phone = findViewById(R.id.editTextPhone);
     }
@@ -31,5 +32,11 @@ public class AddStudent extends AppCompatActivity {
         name.setText("");
         phone.setText("");
         Toast.makeText(this, "Student Added", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }
