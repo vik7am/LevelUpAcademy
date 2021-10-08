@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "953936181374",
+    "project_id": "my-firebase-b6962",
+    "storage_bucket": "my-firebase-b6962.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:953936181374:android:807cc7beb6f567aac1c02f",
+        "android_client_info": {
+          "package_name": "com.vikrant.levelupacademy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "953936181374-83fa86r451b62bncbfrelgiqg4uqivl5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsaciKOTBkycGiKZzagDk8e_Fvd4tP5Tk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "953936181374-83fa86r451b62bncbfrelgiqg4uqivl5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:953936181374:android:cae6548090bfb323c1c02f",
+        "android_client_info": {
+          "package_name": "com.vikrant.myfirebase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "953936181374-83fa86r451b62bncbfrelgiqg4uqivl5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsaciKOTBkycGiKZzagDk8e_Fvd4tP5Tk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "953936181374-83fa86r451b62bncbfrelgiqg4uqivl5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

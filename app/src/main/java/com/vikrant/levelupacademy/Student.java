@@ -8,6 +8,9 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.*;
+
 import java.util.ArrayList;
 
 public class Student extends AppCompatActivity {
@@ -15,7 +18,9 @@ public class Student extends AppCompatActivity {
     RecyclerView recyclerView;
     StudentAdapter adapter;
     RecyclerView.LayoutManager layoutManager;
-    ArrayList<String> name, phone;
+    ArrayList<StudentNode> studentNodeArrayList;
+    FirebaseFirestore database = FirebaseFirestore.getInstance();
+    CollectionReference studentRef = database.collection("Students");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,10 +33,12 @@ public class Student extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        name.clear();
-        phone.clear();
-        getStudentList();
-        adapter.notifyDataSetChanged();
+        if(adapter != null) {
+            studentNodeArrayList.clear();
+            getStudentList();
+            adapter.notifyDataSetChanged();
+        }
+
     }
 
     public void initialize() {
@@ -39,11 +46,9 @@ public class Student extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        name = new ArrayList<>();
-        phone = new ArrayList<>();
+        studentNodeArrayList = new ArrayList<>();
         getStudentList();
-        adapter= new StudentAdapter(name, phone);
-        recyclerView.setAdapter(adapter);
+
     }
 
     public void addStudent(View view) {
@@ -53,17 +58,23 @@ public class Student extends AppCompatActivity {
     public void clearStudent(View view) {
         SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
         preferences.edit().clear().apply();
-        name.clear();
-        phone.clear();
+        studentNodeArrayList.clear();
         adapter.notifyDataSetChanged();
     }
     public void getStudentList() {
-        SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
-        int id = preferences.getInt("id",0);
-        for(int i=0; i<id; i++) {
-            name.add(preferences.getString("Name"+ i, "Sample Name"));
-            phone.add(preferences.getString("Phone"+ i, "Sample Number"));
-        }
+
+        studentRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
+                    StudentNode node = documentSnapshot.toObject(StudentNode.class);
+                    node.setId(documentSnapshot.getId());
+                    studentNodeArrayList.add(node);
+                }
+                adapter= new StudentAdapter(studentNodeArrayList);
+                recyclerView.setAdapter(adapter);
+            }
+        });
     }
     @Override
     public boolean onSupportNavigateUp() {

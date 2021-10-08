@@ -1,16 +1,22 @@
 package com.vikrant.levelupacademy;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class AddStudent extends AppCompatActivity {
 
     EditText name, phone;
+    FirebaseFirestore database = FirebaseFirestore.getInstance();
+    CollectionReference studentRef = database.collection("Students");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,16 +28,17 @@ public class AddStudent extends AppCompatActivity {
     }
 
     public void saveStudent(View view) {
-        SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
-        int id = preferences.getInt("id",0);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("Name"+ id, name.getText().toString());
-        editor.putString("Phone"+ id, phone.getText().toString());
-        editor.putInt("id", id+1);
-        editor.apply();
+        String studentName = name.getText().toString();
+        String studentPhone = phone.getText().toString();
+        StudentNode node = new StudentNode(studentName, studentPhone);
+        studentRef.add(node).addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+            @Override
+            public void onSuccess(DocumentReference documentReference) {
+                Toast.makeText(AddStudent.this, "Student Added", Toast.LENGTH_SHORT).show();
+            }
+        });
         name.setText("");
         phone.setText("");
-        Toast.makeText(this, "Student Added", Toast.LENGTH_SHORT).show();
     }
 
     @Override

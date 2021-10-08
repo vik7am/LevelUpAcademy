@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.MyViewHolder>{
 
-    ArrayList<String> name, phone;
+    ArrayList<StudentNode> studentNodeArrayList;
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         TextView textView1, textView2;
@@ -20,9 +20,8 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.MyViewHo
         }
     }
 
-    public StudentAdapter(ArrayList<String> name, ArrayList<String> phone) {
-        this.name = name;
-        this.phone = phone;
+    public StudentAdapter(ArrayList<StudentNode> studentNodeArrayList) {
+        this.studentNodeArrayList =studentNodeArrayList;
     }
 
     @Override
@@ -34,13 +33,13 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(StudentAdapter.MyViewHolder holder, int position) {
-        holder.textView1.setText(name.get(position));
-        holder.textView2.setText(phone.get(position));
+        holder.textView1.setText(studentNodeArrayList.get(position).getName());
+        holder.textView2.setText(studentNodeArrayList.get(position).getPhone());
     }
 
     @Override
     public int getItemCount() {
-        return name.size();
+        return studentNodeArrayList.size();
     }
 
 }

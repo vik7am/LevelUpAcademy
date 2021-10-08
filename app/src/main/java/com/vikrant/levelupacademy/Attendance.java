@@ -10,6 +10,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+
 import java.util.ArrayList;
 
 public class Attendance extends AppCompatActivity {
@@ -20,6 +26,11 @@ public class Attendance extends AppCompatActivity {
     ArrayList<String> name, attendance;
     String day[] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
     int dayNo = 0;
+    FirebaseFirestore database = FirebaseFirestore.getInstance();
+    CollectionReference studentRef = database.collection("Students");
+    CollectionReference attendanceRef = database.collection("Attendances");
+    ArrayList<StudentNode> studentNodes;
+    ArrayList<AttendanceNode> attendanceNodes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,9 +47,11 @@ public class Attendance extends AppCompatActivity {
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         name = new ArrayList<>(); attendance = new ArrayList<>();
+        studentNodes = new ArrayList<>();
+        attendanceNodes = new ArrayList<>();
         getStudentList();
-        adapter= new AttendanceAdapter(this, name, attendance);
-        recyclerView.setAdapter(adapter);
+        //adapter= new AttendanceAdapter(this, name, attendance);
+        //recyclerView.setAdapter(adapter);
 
     }
 
@@ -52,7 +65,21 @@ public class Attendance extends AppCompatActivity {
         dayNo = which;
         adapter.dayNo = which;
         setTitle(day[which]);
-        //Toast.makeText(this, ""+which, Toast.LENGTH_SHORT).show();
+        attendanceNodes.clear();
+        attendanceRef.whereEqualTo("day",day[dayNo])
+                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
+                    AttendanceNode node = documentSnapshot.toObject(AttendanceNode.class);
+                    node.setId(documentSnapshot.getId());
+                    attendanceNodes.add(node);
+                }
+                adapter.attendanceNodes = attendanceNodes;
+                adapter.notifyDataSetChanged();
+            }
+        });
+        /*
         SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
         int id = preferences.getInt("id",0);
         for(int i=0; i<id; i++) {
@@ -61,8 +88,8 @@ public class Attendance extends AppCompatActivity {
         }
         name.clear();
         attendance.clear();
-        getStudentList();
-        adapter.notifyDataSetChanged();
+        getStudentList();*/
+
     }
 
     public void clearStudent(View view) {
@@ -74,12 +101,41 @@ public class Attendance extends AppCompatActivity {
     }
 
     public void getStudentList() {
+
+        studentRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
+                    StudentNode node = documentSnapshot.toObject(StudentNode.class);
+                    node.setId(documentSnapshot.getId());
+                    studentNodes.add(node);
+                }
+                getAttendanceList();
+            }
+        });
+        /*
         SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
         int id = preferences.getInt("id",0);
         for(int i=0; i<id; i++) {
             name.add(preferences.getString("Name"+ i, "Sample Name"));
             attendance.add(preferences.getString(""+dayNo+"Attendance"+ i, ""));
-        }
+        }*/
+    }
+
+    public void getAttendanceList() {
+        attendanceRef.whereEqualTo("day",day[dayNo])
+                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
+                    AttendanceNode node = documentSnapshot.toObject(AttendanceNode.class);
+                    node.setId(documentSnapshot.getId());
+                    attendanceNodes.add(node);
+                }
+                adapter= new AttendanceAdapter(Attendance.this, studentNodes, attendanceNodes);
+                recyclerView.setAdapter(adapter);
+            }
+        });
     }
 
     @Override
