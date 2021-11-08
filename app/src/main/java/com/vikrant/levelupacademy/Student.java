@@ -15,12 +15,15 @@ import java.util.ArrayList;
 
 public class Student extends AppCompatActivity {
 
+    //String ids = "";
+    int noOfStudents;
     RecyclerView recyclerView;
     StudentAdapter adapter;
     RecyclerView.LayoutManager layoutManager;
-    ArrayList<StudentNode> studentNodeArrayList;
+    ArrayList<StudentNode> studentList;
     FirebaseFirestore database = FirebaseFirestore.getInstance();
-    CollectionReference studentRef = database.collection("Students");
+    DocumentReference studentRef = database.document("class/10/student/list");
+    DocumentReference dataRef = database.document("class/10");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,11 +37,10 @@ public class Student extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if(adapter != null) {
-            studentNodeArrayList.clear();
-            getStudentList();
+            studentList.clear();
+            getNoOfStudents();
             adapter.notifyDataSetChanged();
         }
-
     }
 
     public void initialize() {
@@ -46,8 +48,8 @@ public class Student extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        studentNodeArrayList = new ArrayList<>();
-        getStudentList();
+        studentList = new ArrayList<>();
+        getNoOfStudents();
 
     }
 
@@ -58,24 +60,36 @@ public class Student extends AppCompatActivity {
     public void clearStudent(View view) {
         SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
         preferences.edit().clear().apply();
-        studentNodeArrayList.clear();
+        studentList.clear();
         adapter.notifyDataSetChanged();
     }
-    public void getStudentList() {
 
-        studentRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+    public void getStudentList() {
+        if(noOfStudents ==0)
+            return;
+        studentRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
-                    StudentNode node = documentSnapshot.toObject(StudentNode.class);
-                    node.setId(documentSnapshot.getId());
-                    studentNodeArrayList.add(node);
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                for(int i = 0; i < noOfStudents; i++){
+                    studentList.add(new StudentNode(documentSnapshot.get(i+"n").toString(),
+                            documentSnapshot.get(i+"p").toString()));
                 }
-                adapter= new StudentAdapter(studentNodeArrayList);
+                adapter= new StudentAdapter(studentList);
                 recyclerView.setAdapter(adapter);
             }
         });
     }
+
+    public void getNoOfStudents() {
+        dataRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                noOfStudents = Integer.parseInt(documentSnapshot.get("no-of-students").toString());
+                getStudentList();
+            }
+        });
+    }
+
     @Override
     public boolean onSupportNavigateUp() {
         finish();

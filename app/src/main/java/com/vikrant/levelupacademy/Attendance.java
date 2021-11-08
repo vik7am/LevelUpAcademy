@@ -11,25 +11,33 @@ import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class Attendance extends AppCompatActivity {
 
     RecyclerView recyclerView;
+    boolean refreshAttendance;
     AttendanceAdapter adapter;
     RecyclerView.LayoutManager layoutManager;
     ArrayList<String> name, attendance;
+    int noOfAttendance;
+    String id;
+    int noOfStudents;
+    Map<String, Object> map;
+    int i;
     String day[] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
     int dayNo = 0;
     FirebaseFirestore database = FirebaseFirestore.getInstance();
-    CollectionReference studentRef = database.collection("Students");
-    CollectionReference attendanceRef = database.collection("Attendances");
-    ArrayList<StudentNode> studentNodes;
+    //CollectionReference studentRef = database.collection("Students");
+    DocumentReference studentRef = database.document("class/10/student/list");
+    CollectionReference attendanceRef = database.collection("class/10/attendance");
+    DocumentReference dataRef = database.document("class/10");
+    ArrayList<StudentNode> studentList;
     ArrayList<AttendanceNode> attendanceNodes;
 
     @Override
@@ -47,12 +55,10 @@ public class Attendance extends AppCompatActivity {
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         name = new ArrayList<>(); attendance = new ArrayList<>();
-        studentNodes = new ArrayList<>();
+        map = new HashMap();
+        studentList = new ArrayList<>();
         attendanceNodes = new ArrayList<>();
-        getStudentList();
-        //adapter= new AttendanceAdapter(this, name, attendance);
-        //recyclerView.setAdapter(adapter);
-
+        getNoOfStudents();
     }
 
     public void selectDay(View view) {
@@ -66,31 +72,10 @@ public class Attendance extends AppCompatActivity {
         adapter.dayNo = which;
         setTitle(day[which]);
         attendanceNodes.clear();
-        attendanceRef.whereEqualTo("day",day[dayNo])
-                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-            @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
-                    AttendanceNode node = documentSnapshot.toObject(AttendanceNode.class);
-                    node.setId(documentSnapshot.getId());
-                    attendanceNodes.add(node);
-                }
-                adapter.attendanceNodes = attendanceNodes;
-                adapter.notifyDataSetChanged();
-            }
-        });
-        /*
-        SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
-        int id = preferences.getInt("id",0);
-        for(int i=0; i<id; i++) {
-            name.add(preferences.getString("Name"+ i, "Sample Name"));
-            attendance.add(preferences.getString(""+dayNo+"Attendance"+ i, ""));
-        }
-        name.clear();
-        attendance.clear();
-        getStudentList();*/
-
+        refreshAttendance =true;
+        getAttendance();
     }
+
 
     public void clearStudent(View view) {
         SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
@@ -101,42 +86,83 @@ public class Attendance extends AppCompatActivity {
     }
 
     public void getStudentList() {
-
-        studentRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+        if(noOfStudents == 0)
+            return;
+        studentRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
-                    StudentNode node = documentSnapshot.toObject(StudentNode.class);
-                    node.setId(documentSnapshot.getId());
-                    studentNodes.add(node);
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                for(int i = 0; i < noOfStudents; i++){
+                    studentList.add(new StudentNode(documentSnapshot.get(i+"n").toString(),
+                            documentSnapshot.get(i+"p").toString()));
                 }
                 getAttendanceList();
             }
         });
-        /*
-        SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
-        int id = preferences.getInt("id",0);
-        for(int i=0; i<id; i++) {
-            name.add(preferences.getString("Name"+ i, "Sample Name"));
-            attendance.add(preferences.getString(""+dayNo+"Attendance"+ i, ""));
-        }*/
     }
 
-    public void getAttendanceList() {
-        attendanceRef.whereEqualTo("day",day[dayNo])
-                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+    public void getNoOfStudents() {
+        dataRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
-                    AttendanceNode node = documentSnapshot.toObject(AttendanceNode.class);
-                    node.setId(documentSnapshot.getId());
-                    attendanceNodes.add(node);
-                }
-                adapter= new AttendanceAdapter(Attendance.this, studentNodes, attendanceNodes);
-                recyclerView.setAdapter(adapter);
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                noOfStudents = Integer.parseInt(documentSnapshot.get("no-of-students").toString());
+                getStudentList();
             }
         });
     }
+
+    public void getAttendanceList() {
+        dataRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                noOfAttendance = Integer.parseInt(documentSnapshot.get("no-of-attendance").toString());
+                getAttendance();
+            }
+        });
+    }
+
+    public void getAttendance() {
+        //if(noOfAttendance == 0) {
+            for(i=0; i<studentList.size(); i++) {
+                attendanceNodes.add(new AttendanceNode(""+i, day[dayNo], "Not Marked"));
+            }
+            if (refreshAttendance)
+                adapter.notifyDataSetChanged();
+            else {
+                adapter= new AttendanceAdapter(Attendance.this, studentList, attendanceNodes, noOfAttendance);
+                recyclerView.setAdapter(adapter);
+            }
+        }
+        /*else {
+            for(i=0; i<studentList.size();i++) {
+                getAtt(i);
+            }
+        }
+    }*/
+
+    /*void getAtt(final int ii) {
+            //System.out.println("$$$$$$$$$$$$$$$$"+ii);
+            attendanceRef.document(""+ii).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                @Override
+                public void onSuccess(DocumentSnapshot documentSnapshot) {
+                    //System.out.println("%%%%%%%%%%%%%55 "+ documentSnapshot.get(day[dayNo]));
+                    if(documentSnapshot.get(day[dayNo]) == null)
+                        attendanceNodes.add(new AttendanceNode(""+ii, day[dayNo], "Not Marked"));
+                    else
+                        attendanceNodes.add(new AttendanceNode(""+ii, day[dayNo], documentSnapshot.get(day[dayNo]).toString()));
+                    if(ii==studentList.size()-1) {
+                        if(refreshAttendance)
+                            adapter.notifyDataSetChanged();
+                        else {
+                            adapter= new AttendanceAdapter(Attendance.this, studentList, attendanceNodes, noOfAttendance);
+                            recyclerView.setAdapter(adapter);
+                        }
+                        //System.out.println("$$$$$$$$$$$$$$$$ Launch");
+                    }
+                }
+            });
+
+
+    }*/
 
     @Override
     public boolean onSupportNavigateUp() {

@@ -10,25 +10,28 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.MyViewHolder>{
 
     ArrayList<String> name, attendance;
-    ArrayList<StudentNode> studentNodes;
-    ArrayList<AttendanceNode> attendanceNodes;
+    int noOfAttendance;
+    ArrayList<StudentNode> studentList;
+    ArrayList<AttendanceNode> attendanceList;
     AttendanceNode attendanceNode;
     Context context;
+    String id;
+    Map<String, Object> map;
+    int i;
     int dayNo;
     String day[] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
     FirebaseFirestore database = FirebaseFirestore.getInstance();
-    //CollectionReference studentRef = database.collection("Students");
-    CollectionReference attendanceRef = database.collection("Attendances");
+    CollectionReference attendanceRef = database.collection("class/10/attendance");
+    DocumentReference dataRef = database.document("class/10");
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
 
@@ -41,10 +44,13 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.My
         }
     }
 
-    public AttendanceAdapter(Context context, ArrayList<StudentNode> studentNodes, ArrayList<AttendanceNode> attendanceNodes) {
+    public AttendanceAdapter(Context context, ArrayList<StudentNode> studentList,
+                             ArrayList<AttendanceNode> attendanceList, int noOfAttendance) {
         this.context = context;
-        this.studentNodes = studentNodes;
-        this.attendanceNodes = attendanceNodes;
+        this.noOfAttendance = noOfAttendance;
+        this.studentList = studentList;
+        this.attendanceList = attendanceList;
+        map = new HashMap();
     }
 
     @Override
@@ -56,14 +62,14 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.My
 
     @Override
     public void onBindViewHolder(AttendanceAdapter.MyViewHolder holder, int position) {
-        holder.textView1.setText(studentNodes.get(position).getName());
-        holder.textView2.setText(getAttendance(position));
+        holder.textView1.setText(studentList.get(position).getName());
+        holder.textView2.setText(attendanceList.get(position).attendance);
         holder.itemView.setOnClickListener(v -> showDialog(position));
     }
 
     public String getAttendance(int position) {
-        for(AttendanceNode a:attendanceNodes)
-            if(a.getId().equals(dayNo+studentNodes.get(position).getId()))
+        for(AttendanceNode a:attendanceList)
+            if(a.getId().equals(dayNo+studentList.get(position).getId()))
                 return a.attendance;
         return "";
     }
@@ -76,41 +82,42 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.My
     }
 
     public void updateAttendance(String item, int position) {
-        attendanceNode = new AttendanceNode(studentNodes.get(position).getId(), day[dayNo], item);
-        //attendanceNode.setId(attendanceNodes.get(position).getId());
-        attendanceRef.document(dayNo+attendanceNode.getStudentId()).set(attendanceNode)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        refreshAttendance();
-                    }
-                });
-        /*SharedPreferences preferences = context.getSharedPreferences("student", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString(""+dayNo+"Attendance"+ position, item);
-        editor.apply();
-        attendance.set(position, item);*/
-
+        map.clear();
+        map.put(day[dayNo], item);
+        if(noOfAttendance == 0) {
+            attendanceRef.document("" + position).set(map).addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void unused) {
+                    attendanceList.get(position).attendance = item;
+                    updateNoOfAttendance();
+                }
+            });
+        }
+        else {
+            attendanceRef.document(""+position).update(map).addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void unused) {
+                    attendanceList.get(position).attendance = item;
+                    notifyDataSetChanged();
+                }
+            });
+        }
     }
-    public void refreshAttendance(){
-        attendanceNodes.clear();
-        attendanceRef.whereEqualTo("day",day[dayNo])
-                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                    @Override
-                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                        for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
-                            AttendanceNode node = documentSnapshot.toObject(AttendanceNode.class);
-                            node.setId(documentSnapshot.getId());
-                            attendanceNodes.add(node);
-                        }
-                        notifyDataSetChanged();
-                    }
-                });
+
+    void updateNoOfAttendance() {
+        map.clear();
+        map.put("no-of-attendance", (noOfAttendance +1));
+        dataRef.update(map).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                notifyDataSetChanged();
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        return studentNodes.size();
+        return studentList.size();
     }
 
 }

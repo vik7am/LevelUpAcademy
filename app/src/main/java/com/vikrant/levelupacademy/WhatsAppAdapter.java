@@ -14,10 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.*;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -31,10 +28,10 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
     PackageManager packageManager;
     String day[] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
     FirebaseFirestore database = FirebaseFirestore.getInstance();
-    CollectionReference studentRef = database.collection("Students");
-    CollectionReference attendanceRef = database.collection("Attendances");
-    ArrayList<StudentNode> studentNodes;
-    ArrayList<AttendanceNode> attendanceNodes;
+    //CollectionReference studentRef = database.collection("Students");
+    CollectionReference attendanceRef = database.collection("class/10/attendance");
+    ArrayList<StudentNode> studentList;
+    ArrayList<AttendanceNode> attendanceList;
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
 
@@ -53,8 +50,8 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
         this.phone = phone;
         attendance= new ArrayList<>();
         packageManager = context.getPackageManager();
-        this.studentNodes = studentNodes;
-        attendanceNodes = new ArrayList<>();
+        this.studentList = studentNodes;
+        attendanceList = new ArrayList<>();
     }
 
     @Override
@@ -66,27 +63,44 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
 
     @Override
     public void onBindViewHolder(WhatsAppAdapter.MyViewHolder holder, int position) {
-        holder.textView1.setText(studentNodes.get(position).getName());
+        holder.textView1.setText(studentList.get(position).getName());
         holder.textView2.setText("");
         holder.itemView.setOnClickListener(v -> getAttendance(position));
     }
 
     public void getAttendance(int position) {
-        attendanceNodes.clear();
-        attendanceNodes.clear();
-        attendanceRef.whereEqualTo("studentId", studentNodes.get(position).getId())
+        //System.out.println("$$$$$$$$$$$$$$$ ");
+        attendanceList.clear();
+        attendanceRef.document(""+position).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                for(int i = 0; i<6; i++) {
+                    if(documentSnapshot.get(""+day[i]) == null)
+                        attendanceList.add(new AttendanceNode(""+position, day[i], "Not Marked"));
+                    else
+                    {
+                        System.out.println("^^^^^^^^^^^^^^^666");
+                        attendanceList.add(new AttendanceNode(""+position, day[i], documentSnapshot.get(""+day[i]).toString()));
+                    }
+
+                }
+                sendMessage(position);
+            }
+        });
+        /*
+        attendanceRef.whereEqualTo("studentId", studentList.get(position).getId())
                 .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                     @Override
                     public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                         for(QueryDocumentSnapshot documentSnapshot: queryDocumentSnapshots) {
                             AttendanceNode node = documentSnapshot.toObject(AttendanceNode.class);
                             node.setId(documentSnapshot.getId());
-                            attendanceNodes.add(node);
+                            attendanceList.add(node);
                         }
                         sendMessage(position);
                     }
                 });
-
+*/
         /*attendance.clear();
         SharedPreferences preferences = context.getSharedPreferences("student", Context.MODE_PRIVATE);
         //int id = preferences.getInt("id",0);
@@ -96,19 +110,24 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
         System.out.println("$$$$$$$$$$$$$"+ attendance.size());*/
     }
 
-    public String getStringAttendance(int i) {
-        for(AttendanceNode a:attendanceNodes)
+    /*public String getStringAttendance(int i) {
+        for(AttendanceNode a:attendanceList)
             if(a.getDay().equals(day[i]))
                 return a.attendance;
         return "";
-    }
+    }*/
 
 
     public void sendMessage(int position) {
         String packageName;
-        String message="Attendance of "+ studentNodes.get(position).getName() +":\n";
+        //System.out.println("$$$$$$$$$$$$$$$ ");
+        //System.out.println("$$$$$$$$$$$$$$$ "+appInstalledOrNot("com.whatsapp"));
+        String message="Attendance of "+ studentList.get(position).getName() +":\n";
+        //Toast.makeText(context, ""+ studentNodes.get(position).getPhone(), Toast.LENGTH_SHORT).show();
+
+
         for(int i=0; i<6; i++)
-            message += day[i] + " : " + getStringAttendance(i) + "\n";
+            message += day[i] + " : " + attendanceList.get(i).attendance + "\n";
         if(appInstalledOrNot("com.whatsapp"))
             packageName = "com.whatsapp";
         else if (appInstalledOrNot("com.whatsapp.w4b"))
@@ -124,7 +143,7 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
         String url;
         try {
             PackageInfo info=packageManager.getPackageInfo(packageName, PackageManager.GET_META_DATA);
-            url = "https://api.whatsapp.com/send?phone="+ countryCode + phone.get(position) +"&text=" +
+            url = "https://api.whatsapp.com/send?phone="+ countryCode + studentList.get(position).getPhone() +"&text=" +
                     URLEncoder.encode(message, "UTF-8");
             intent.setPackage(packageName);
             intent.setData(Uri.parse(url));
@@ -139,7 +158,7 @@ public class WhatsAppAdapter extends RecyclerView.Adapter<WhatsAppAdapter.MyView
 
     @Override
     public int getItemCount() {
-        return studentNodes.size();
+        return studentList.size();
     }
 
     public boolean appInstalledOrNot(String uri) {

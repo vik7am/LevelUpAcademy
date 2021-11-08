@@ -7,22 +7,21 @@ import android.content.SharedPreferences;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
 
 public class WhatsApp extends AppCompatActivity {
 
+    int noOfStudents;
     RecyclerView recyclerView;
     WhatsAppAdapter adapter;
     RecyclerView.LayoutManager layoutManager;
     ArrayList<String> name, phone;
-    ArrayList<StudentNode> studentNodeArrayList;
+    ArrayList<StudentNode> studentList;
     FirebaseFirestore database = FirebaseFirestore.getInstance();
-    CollectionReference studentRef = database.collection("Students");
+    DocumentReference studentRef = database.document("class/10/student/list");
+    DocumentReference dataRef = database.document("class/10");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,14 +37,14 @@ public class WhatsApp extends AppCompatActivity {
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         name = new ArrayList<>(); phone = new ArrayList<>();
-        studentNodeArrayList = new ArrayList<>();
-        getStudentList();
+        studentList = new ArrayList<>();
+        getNoOfStudents();
         //adapter= new WhatsAppAdapter(this, name, phone);
         //recyclerView.setAdapter(adapter);
     }
 
 
-    public void getStudentList() {
+    /*public void getStudentList() {
 
         studentRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
@@ -55,18 +54,35 @@ public class WhatsApp extends AppCompatActivity {
                     node.setId(documentSnapshot.getId());
                     studentNodeArrayList.add(node);
                 }
-                adapter= new WhatsAppAdapter(WhatsApp.this, studentNodeArrayList);
+                a
+            }
+        });
+    }*/
+
+    public void getStudentList() {
+        if(noOfStudents ==0)
+            return;
+        studentRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                for(int i = 0; i < noOfStudents; i++){
+                    studentList.add(new StudentNode(documentSnapshot.get(i+"n").toString(),
+                            documentSnapshot.get(i+"p").toString()));
+                }
+                adapter= new WhatsAppAdapter(WhatsApp.this, studentList);
                 recyclerView.setAdapter(adapter);
             }
         });
+    }
 
-        SharedPreferences preferences = getSharedPreferences("student", Context.MODE_PRIVATE);
-        int id = preferences.getInt("id",0);
-        for(int i=0; i<id; i++) {
-            name.add(preferences.getString("Name"+ i, "Sample Name"));
-            phone.add(preferences.getString("Phone"+ i, "Sample Name"));
-            //attendance.add(preferences.getString("Attendance"+ i, "Sample Name"));
-        }
+    public void getNoOfStudents() {
+        dataRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                noOfStudents = Integer.parseInt(documentSnapshot.get("no-of-students").toString());
+                getStudentList();
+            }
+        });
     }
 
     @Override
